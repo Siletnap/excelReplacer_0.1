@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Boat, TrafficEntry
-from .forms import NewBoatForm
+from .forms import NewBoatForm, NewTrafficForm
 # from .filters import EntryFilter
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -89,6 +89,31 @@ class BoatListView(BaseListCreateView):
     ]
     row_partial  = "lists/boats/_row.html"
     form_partial = "lists/boats/_form_fields.html"
+
+class TrafficListView(BaseListCreateView):
+    model         = TrafficEntry
+    form_class    = NewTrafficForm
+    template_name = "lists/list_page.html"     # shared page
+    success_url   = reverse_lazy("traffic")
+    page_title    = "Traffic List"
+
+    search_fields = ("boatType", "name", "trDate", "trTime", "direction", "passengers", "purpose", "edr", "etr", "trComments", "berth")
+
+    column_list = [
+        {"field": "boatType",   "label": "Type"},
+        {"field": "name",       "label": "Name"},
+        {"field": "trDate",     "label": "Date"},
+        {"field": "trTime",     "label": "Time"},
+        {"field": "direction",  "label": "Direction"},
+        {"field": "passengers", "label": "Passengers"},
+        {"field": "purpose",    "label": "Purpose"},
+        {"field": "edr",        "label": "E.R.Date"},
+        {"field": "edt",        "label": "E.R.Time"},
+        {"field": "trComments", "label": "Comments"},
+        {"field": "berth",      "label": "Berth"},
+    ]
+    row_partial  = "lists/traffic/_row.html"
+    form_partial = "lists/traffic/_form_fields.html"
 
 def update(request, pk):
     boat = Boat.objects.get(id = pk)

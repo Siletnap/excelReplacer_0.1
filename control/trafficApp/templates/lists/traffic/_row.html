@@ -1,0 +1,18 @@
+{# templates/lists/traffic/_row.html #}
+<tr>
+  <td data-col-index="0">{{ obj.boatType }}</td>
+  <td data-col-index="1">{{ obj.name }}</td>
+  <td data-col-index="2">{{ obj.trDate }}</td>
+  <td data-col-index="3">{{ obj.trTime }}</td>
+  <td data-col-index="4">{{ obj.direction }}</td>
+  <td data-col-index="5">{{ obj.passengers }}</td>
+  <td data-col-index="6">{{ obj.purpose }}</td>
+  <td data-col-index="7">{{ obj.edr }}</td>
+  <td data-col-index="8">{{ obj.etr }}</td>
+  <td data-col-index="9">{{ obj.trComments }}</td>
+  <td data-col-index="10">{{ obj.berth }}</td>
+  <td data-col-index="11">
+    <a href="{% url 'update' obj.id %}">Edit</a>
+    <a href="{% url 'delete' obj.id %}">Delete</a>
+  </td>
+</tr>

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const typeInputs = document.querySelectorAll('input[name="booking_type"]');
     const dateDiv    = document.getElementById('date-fields');
+    const timeDiv    = document.getElementById('time-fields');
     const cidInput   = document.getElementById('id_cid');
 
     function formatToday() {

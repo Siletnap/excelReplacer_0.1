@@ -1,8 +1,26 @@
 from django import forms
 from django.forms.widgets import DateInput
 import datetime
+from .models import Boat, TrafficEntry
 
-from .models import Boat
+class NewTrafficForm(forms.ModelForm):
+    trDate = forms.DateField(
+        required=False,
+        widget=DateInput(attrs={'type': 'date'}),
+        label="Date"
+    )
+    trTime = forms.TimeField(
+        required=False,
+        widget=DateInput(attrs={'type': 'time'}),
+        label="Time",
+    )
+    class Meta:
+        model  = TrafficEntry
+        fields = [
+            'boatType', 'name', 'trDate', 'trTime',
+            'direction', 'passengers', 'purpose',
+            'edr', 'etr', 'trComments', 'berth'
+        ]
 
 class NewBoatForm(forms.ModelForm):
     # 1) Single declaration of booking_type with hardcoded tuples
