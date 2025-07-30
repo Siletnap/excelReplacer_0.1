@@ -1,0 +1,6 @@
+<form method="get" class="my-3" id="searchForm">
+  {% csrf_token %}
+  <input type="text" name="q" id="searchInput" value="{{ q }}" placeholder="Search…">
+  <button class="btn btn-primary"  type="submit">Search</button>
+  <button class="btn btn-secondary" type="button" id="clearBtn">Clear</button>
+</form>

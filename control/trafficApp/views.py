@@ -1,54 +1,94 @@
 from django.shortcuts import render, redirect
-from .models import Boat
+from .models import Boat, TrafficEntry
 from .forms import NewBoatForm
 # from .filters import EntryFilter
 from django.db.models import Q
+from django.urls import reverse_lazy
+from django.views.generic import ListView
+from django.views.generic.edit import FormMixin
 
+class BaseListCreateView(FormMixin, ListView):
+    """
+    Reusable list+create view with server-side search only.
+    Subclasses must set: model, form_class, template_name, success_url.
+    They can customize: search_fields, column_list, page_title,
+    row_partial, form_partial.
+    """
+    form_class    = None
+    success_url   = None
+    search_fields = ()      # e.g. ('name','boatType',...)
+    column_list   = ()      # [{'field':'name','label':'Name'}, ...]
+    page_title    = ''
+    row_partial   = ''
+    form_partial  = ''
 
-def index(request):
-    # ---------- handle the create form ----------
-    if request.method == "POST":
-        form = NewBoatForm(request.POST)
+    def get_success_url(self):
+        return self.success_url or self.request.path
+
+    # ---- POST: create via the form and PRG redirect ----
+    def post(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        form = self.get_form()
         if form.is_valid():
             form.save()
-            return redirect("index")          # PRG pattern
-    else:
-        form = NewBoatForm()
+            return redirect(self.get_success_url())
+        # invalid → redisplay with errors + list
+        ctx = self.get_context_data(form=form)
+        return self.render_to_response(ctx)
 
-    # ---------- build the queryset ----------
-    boats = Boat.objects.all()                # base queryset
-    q      = request.GET.get("q", "").strip() # search term
+    # ---- GET: list + empty form ----
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        form = self.get_form()
+        return self.render_to_response(self.get_context_data(form=form))
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.method == "POST":
+            kwargs["data"] = self.request.POST
+        return kwargs
 
-    if q:                                     # filter on *either* column
-        boats = boats.filter(
-            Q(name__icontains=q) |            # case‑insensitive contains  :contentReference[oaicite:0]{index=0}
-            Q(boatType__icontains=q) |
-            Q(berth__icontains=q) |
-            Q(state__icontains=q) |
-            Q(cid__icontains=q)|
-            Q(ecod__icontains=q)
-        )
+    def get_queryset(self):
+        qs = super().get_queryset()
+        q  = self.request.GET.get("q", "").strip()
+        if q and self.search_fields:
+            or_query = Q()
+            for field in self.search_fields:
+                or_query |= Q(**{f"{field}__icontains": q})
+            qs = qs.filter(or_query)
+        return qs  # no order_by here; sorting is JS-only
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "q":           self.request.GET.get("q", "").strip(),
+            "column_list": self.column_list,
+            "page_title":  self.page_title,
+            "row_partial": self.row_partial,
+            "form_partial": self.form_partial,
+        })
+        return ctx
+
+class BoatListView(BaseListCreateView):
+    model         = Boat
+    form_class    = NewBoatForm
+    template_name = "lists/list_page.html"     # shared page
+    success_url   = reverse_lazy("boats")
+    page_title    = "Boat List"
+
+    search_fields = ("name", "boatType", "berth", "state", "cid", "ecod")
 
     column_list = [
-        {'field': 'boatType', 'label': 'Type'},
-        {'field': 'name', 'label': 'Name'},
-        {'field': 'berth', 'label': 'Berth'},
-        {'field': 'state', 'label': 'State'},
-        {'field': 'cid', 'label': 'Check-In'},
-        {'field': 'ecod', 'label': 'Check-Out'},
-        {'field': 'actions', 'label': 'Actions'},
+        {"field": "boatType", "label": "Type"},
+        {"field": "name",     "label": "Name"},
+        {"field": "berth",    "label": "Berth"},
+        {"field": "state",    "label": "State"},
+        {"field": "cid",      "label": "Check-In"},
+        {"field": "ecod",     "label": "Check-Out"},
+        {"field": "actions",  "label": "Actions"},
     ]
-
-    ctx = {
-        "form": form,
-        "boats": boats,
-        "q": q,
-        "column_list": column_list,
-    }
-
-    return render(request, "index.html", ctx)
+    row_partial  = "lists/boats/_row.html"
+    form_partial = "lists/boats/_form_fields.html"
 
 def update(request, pk):
     boat = Boat.objects.get(id = pk)
@@ -57,15 +97,60 @@ def update(request, pk):
         form = NewBoatForm(request.POST, instance=boat)
         if form.is_valid():
             form.save()
-            return redirect('index')
+            return redirect('boats')
     return render(request, 'update.html', {'boat':boat, 'form': form})
 
 def delete(request, pk):
     boat = Boat.objects.get(id = pk)
     if request.method == 'POST':
         boat.delete()
-        return redirect('index')
+        return redirect('boats')
     return render(request, 'delete.html', {'boat':boat})
 
-def traffic(request):
-    return render(request, 'traffic.html')
+# def traffic(request):
+#     return render(request, 'traffic.html')
+
+# def index(request):
+#     # ---------- handle the create form ----------
+#     if request.method == "POST":
+#         form = NewBoatForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect("index")          # PRG pattern
+#     else:
+#         form = NewBoatForm()
+#
+#     # ---------- build the queryset ----------
+#     boats = Boat.objects.all()                # base queryset
+#     q      = request.GET.get("q", "").strip() # search term
+#
+#
+#     if q:                                     # filter on *either* column
+#         boats = boats.filter(
+#             Q(name__icontains=q) |            # case‑insensitive contains  :contentReference[oaicite:0]{index=0}
+#             Q(boatType__icontains=q) |
+#             Q(berth__icontains=q) |
+#             Q(state__icontains=q) |
+#             Q(cid__icontains=q)|
+#             Q(ecod__icontains=q)
+#         )
+#
+#
+#     column_list = [
+#         {'field': 'boatType', 'label': 'Type'},
+#         {'field': 'name', 'label': 'Name'},
+#         {'field': 'berth', 'label': 'Berth'},
+#         {'field': 'state', 'label': 'State'},
+#         {'field': 'cid', 'label': 'Check-In'},
+#         {'field': 'ecod', 'label': 'Check-Out'},
+#         {'field': 'actions', 'label': 'Actions'},
+#     ]
+#
+#     ctx = {
+#         "form": form,
+#         "boats": boats,
+#         "q": q,
+#         "column_list": column_list,
+#     }
+#
+#     return render(request, "index.html", ctx)

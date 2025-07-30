@@ -1,0 +1,13 @@
+{# templates/lists/boats/_row.html #}
+<tr>
+  <td data-col-index="0">{{ obj.boatType }}</td>
+  <td data-col-index="1">{{ obj.name }}</td>
+  <td data-col-index="2">{{ obj.berth }}</td>
+  <td data-col-index="3" class="state-{{ obj.state }}">{{ obj.state }}</td>
+  <td data-col-index="4">{{ obj.cid }}</td>
+  <td data-col-index="5">{{ obj.ecod }}</td>
+  <td data-col-index="6">
+    <a href="{% url 'update' obj.id %}">Edit</a>
+    <a href="{% url 'delete' obj.id %}">Delete</a>
+  </td>
+</tr>

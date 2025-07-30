@@ -1,0 +1,12 @@
+<form id="columns-form" class="mb-3">
+  {% for col in column_list %}
+    <label style="margin-right:1rem;">
+      <input type="checkbox"
+             class="col-toggle"
+             data-col-index="{{ forloop.counter0 }}"
+             checked>
+      {{ col.label }}
+    </label>
+  {% endfor %}
+  <button type="button" id="apply-columns" class="btn btn-primary btn-sm">Apply</button>
+</form>

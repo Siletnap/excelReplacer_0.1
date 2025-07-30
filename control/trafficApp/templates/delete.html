@@ -1,5 +1,5 @@
 <p>Are you sure you want to delete <strong>"{{boat}}"</strong>?</p>
-<a href="{% url 'index' %}">Cancel</a>
+<a href="{% url 'boats' %}">Cancel</a>
 <form method = 'POST'>
     {%  csrf_token %}
     <input type = 'submit' value = 'Confirm delete'>

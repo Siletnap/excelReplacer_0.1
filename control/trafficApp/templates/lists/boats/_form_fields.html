@@ -1,0 +1,20 @@
+{# templates/lists/boats/_form_fields.html #}
+<div class="field-group">
+  {{ form.boatType.label_tag }} {{ form.boatType }}
+</div>
+<div class="field-group">
+  {{ form.name.label_tag }} {{ form.name }}
+</div>
+<div class="field-group">
+  {{ form.berth.label_tag }} {{ form.berth }}
+</div>
+<div class="field-group">
+  {{ form.state.label_tag }} {{ form.state }}
+</div>
+<div class="field-group">
+  {{ form.booking_type.label_tag }} {{ form.booking_type }}
+  <div id="date-fields" style="display:none;">
+    {{ form.cid.label_tag }} {{ form.cid }}
+    {{ form.ecod.label_tag }} {{ form.ecod }}
+  </div>
+</div>

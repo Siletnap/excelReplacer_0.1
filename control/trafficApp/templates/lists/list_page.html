@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}<title>{{ page_title }}</title>{% endblock %}
+
+{% block content %}
+  <script src="{% static 'js/calendarAppear.js' %}" defer></script>
+  <script src="{% static 'js/columns.js' %}" defer></script>
+
+
+
+  <h1>{{ page_title }}</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <script>alert("{{ form.non_field_errors|join:'\\n'|escapejs }}");</script>
+    {% endif %}
+    <div class="two-fields">
+      {% include form_partial with form=form %}
+      <button type="submit" class="submit-btn">Submit</button>
+    </div>
+  </form>
+
+  {% include "lists/_controls/_column_picker.html" with column_list=column_list %}
+  {% include "lists/_controls/_search_only.html" %}
+
+  {% include "lists/_table.html" with column_list=column_list row_partial=row_partial object_list=object_list %}
+{% endblock %}
