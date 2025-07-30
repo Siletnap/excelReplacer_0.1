@@ -13,5 +13,5 @@ class EntryFilter(django_filters.FilterSet):
     class Meta:
         model = Boat
         fields = ['q']
-#testtestetst - remove
+
 
