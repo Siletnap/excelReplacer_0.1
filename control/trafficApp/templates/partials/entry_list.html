@@ -1,0 +1,30 @@
+{% comment %} trafficApp/templates/trafficApp/partials/entry_list.html {% endcomment %}
+<table class="table table-striped">
+  <thead><tr><th>Name</th><th>Number</th><th>Action</th></tr></thead>
+  <tbody>
+    {% for e in page_obj %}
+      <tr>
+        <td>{{ e.name }}</td>
+        <td>{{ e.number }}</td>
+        <td>
+          <a href="{% url 'update' e.id %}">Update</a>
+          <a href="{% url 'delete' e.id %}">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3">No entries found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <button hx-get="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}"
+            hx-target="#entry-table">Previous</button>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <button hx-get="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}"
+            hx-target="#entry-table">Next</button>
+  {% endif %}
+</div>

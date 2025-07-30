@@ -1,0 +1,112 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Boat List</title>
+{% endblock %}
+
+
+{% block content %}
+    <script src="/static/js/calendarAppear.js"></script>
+    <script src="/static/js/columns.js"></script>
+    <h1>Boat List</h1>
+
+    <!--create-->
+    <form method="POST">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <script>alert("{{ form.non_field_errors|join:'\\n'|escapejs }}");</script>
+        {% endif %}
+        <div class="two-fields">
+            <div class="field-group">
+                {{ form.boatType.label_tag }}
+                {{ form.boatType}}
+            </div>
+            <div class="field-group">
+                {{ form.name.label_tag }}
+                {{ form.name}}
+            </div>
+            <div class="field-group">
+                {{ form.berth.label_tag }}
+                {{ form.berth}}
+            </div>
+            <div class="field-group">
+                {{ form.state.label_tag }}
+                {{ form.state}}
+            </div>
+            <div class="field-group">
+                {{ form.booking_type.label_tag }}
+                {{ form.booking_type}}
+                <div id="date-fields" style="display:none;">
+                    {{ form.cid.label_tag }} {{ form.cid }}
+                    {{ form.ecod.label_tag }} {{ form.ecod }}
+                </div>
+            </div>
+            <button type = 'submit' class="submit-btn">Submit</button>
+        </div>
+    </form>
+
+{# ---------- Columns ----------- #}
+
+    <form id="columns-form" class="mb-3">
+        {% for col in column_list %}
+        <label style="margin-right:1rem;">
+            <input type="checkbox"
+                    class="col-toggle"
+                    data-col-index="{{ forloop.counter0 }}"
+                    checked>
+                {{ col.label }}
+        </label>
+        {% endfor %}
+        <button type="button" id="apply-columns" class="btn btn-primary btn-sm">
+            Apply
+        </button>
+    </form>
+
+     {# ---------- search & sort ---------- #}
+  <form method="get" class="my-3" id="searchForm">
+      {% csrf_token %}
+    <input type="text" name="q" id="searchInput" value="{{ q }}" placeholder="Search…">
+
+
+
+    <button class="btn btn-secondary" type="submit">Apply</button>
+<!--      in sortable-->
+    <button type="button" id="clearBtn" class="btn btn-secondary">Clear</button>
+  </form>
+
+  {# ---------- full list ---------- #}
+
+    <div class="table-wrapper">
+        <table class="boats sortable">
+          <caption>End of boat list</caption>  {# optional but improves accessibility #}
+          <thead>
+            <tr>
+                {% for col in column_list %}
+                    <th data-col-index="{{ forloop.counter0 }}">{{ col.label }}</th>
+                {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for boat in boats %}
+              <tr>
+                <td data-col-index="0">{{ boat.boatType }}</td>
+                <td data-col-index="1">{{ boat.name }}</td>
+                <td data-col-index="2">{{ boat.berth }}</td>
+                <td data-col-index="3" class="state-{{ boat.state }}">{{ boat.state }}</td>
+                <td data-col-index="4">{{ boat.cid }}</td>
+                <td data-col-index="5">{{ boat.ecod }}</td>
+                <td data-col-index="6">
+                  <a href="{% url 'update' boat.id %}">Edit</a>
+                  <a href="{% url 'delete' boat.id %}">Delete</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">No entries found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+
+
+{% endblock %}

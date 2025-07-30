@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link rel = 'stylesheet' href = "{% static 'css/style.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="/static/js/sortable.js"></script>
+
+    {% block title %}
+    <title></title>
+    {% endblock %}
+</head>
+<body>
+    <div class="container">
+        <ul>
+            <li><a href="{% url 'index' %}">Boat List</a></li>
+            <li><a href="{% url 'traffic' %}">Traffic List</a></li>
+            <li><a href="">Pending Deletion</a></li>
+        </ul>
+        <div class="content-wrapper">
+            {% block content %}  {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

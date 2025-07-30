@@ -1,0 +1,154 @@
+/* ========== Navigation Bar ========== */
+.container > ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: #333;
+    width: 100%;
+    border-radius: 50px;
+}
+
+.container > ul li a {
+    display: block;
+    color: #fff;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.container > ul li a:hover {
+    background: #111;
+}
+
+.container > ul li a.active {
+    background: #04AA6D;
+}
+
+/* ========== Headings ========== */
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* ========== Layout Container ========== */
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px 30px;
+    background-color: whitesmoke;
+    border-radius: 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ========== Create Form ========== */
+.two-fields {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 180px;
+}
+
+.field-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.field-group input,
+.field-group select {
+    padding: 5px;
+    font-size: 1em;
+}
+
+.submit-btn {
+    margin-left: auto;
+    align-self: flex-end;
+    padding: 6px 12px;
+    font-size: 1em;
+}
+
+/* Search / sort form */
+form.my-3,
+form.my-3 * {
+    box-sizing: border-box;
+}
+
+form.my-3 {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+/* ========== Table ========== */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto; /* allows horizontal scroll on small screens */
+}
+
+/* Main boat list table */
+table.boats {
+    width: 50%;
+    margin: 20px auto 0;
+    border-collapse: collapse; /* cleaner shared borders */
+    font-size: 1.25rem;
+    background: #fff;
+}
+
+table.boats caption {
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+table.boats th,
+table.boats td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+table.boats th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+table.boats tbody tr:hover {
+    background: #fafafa;
+}
+
+table.boats td a {
+    margin-right: 8px;
+    text-decoration: none;
+    color: #0077cc;
+}
+
+table.boats td a:hover {
+    text-decoration: underline;
+}
+/* ========== States ========== */
+.state-in     { background-color: #79ff4d;  }
+.state-out    { background-color: #ffff66; }
+.state-repair { background-color: #ff6600; }

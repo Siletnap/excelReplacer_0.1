@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Traffic List</title>
+{% endblock %}
+
+
+{% block content %}
+    <h1>Traffic List</h1>
+
+
+
+<!-- full list-->
+    <div class="table-wrapper">
+<!--        boats is for css-->
+        <table class="boats sortable">
+          <caption>Traffic list</caption>  {# optional but improves accessibility #}
+          <thead>
+            <tr>
+                {% for col in column_list %}
+                    <th data-col-index="{{ forloop.counter0 }}">{{ col.label }}</th>
+                {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for boat in boats %}
+              <tr>
+                <td data-col-index="0">{{ boat.boatType }}</td>
+                <td data-col-index="1">{{ boat.name }}</td>
+                <td data-col-index="2">{{ boat.berth }}</td>
+                <td data-col-index="3" class="state-{{ boat.state }}">{{ boat.state }}</td>
+                <td data-col-index="4">{{ boat.cid }}</td>
+                <td data-col-index="5">{{ boat.ecod }}</td>
+                <td data-col-index="6">
+                  <a href="{% url 'update' boat.id %}">Edit</a>
+                  <a href="{% url 'delete' boat.id %}">Delete</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">No entries found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+
+
+{% endblock %}
