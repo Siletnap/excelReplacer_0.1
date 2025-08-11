@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const today = formatToday();
             if (!cidInput.value)  cidInput.value  = today;
 
-        } else {
+        } else if (location.pathname === '/'){
             dateDiv.style.display = 'none';
         }
     }

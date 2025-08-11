@@ -22,7 +22,7 @@
     background: #111;
 }
 
-.container > ul li a.active {
+.container > ul li a:active {
     background: #04AA6D;
 }
 

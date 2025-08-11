@@ -1,5 +1,5 @@
 from django import forms
-from django.forms.widgets import DateInput
+from django.forms.widgets import DateInput, TimeInput
 import datetime
 from .models import Boat, TrafficEntry
 
@@ -11,9 +11,20 @@ class NewTrafficForm(forms.ModelForm):
     )
     trTime = forms.TimeField(
         required=False,
-        widget=DateInput(attrs={'type': 'time'}),
+        widget=TimeInput(attrs={'type': 'time', 'step': '60'}),
         label="Time",
     )
+    edr = forms.DateField(
+        required=False,
+        widget=DateInput(attrs={'type': 'date'}),
+        label="Date"
+    )
+    etr = forms.TimeField(
+        required=False,
+        widget=TimeInput(attrs={'type': 'time', 'step': '60'}),
+        label="Time",
+    )
+
     class Meta:
         model  = TrafficEntry
         fields = [
