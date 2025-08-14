@@ -52,8 +52,8 @@ class TrafficEntry(models.Model):
         default=BoatType.motorYacht,
     )
     name = models.CharField(max_length=100)
-    # trDate = models.DateField(null=True, blank=True)
-    trDate = models.CharField(max_length=20, null=True, blank=True)
+    trDate = models.DateField(null=True, blank=True)
+    # trDate = models.CharField(max_length=20, null=True, blank=True) # date
     trTime = models.TimeField(null=True, blank=True)
     direction = models.CharField(
         max_length=20,
@@ -65,8 +65,8 @@ class TrafficEntry(models.Model):
                                      null=True,
                                      blank=True)
     purpose = models.CharField(max_length=100, default="", null=True, blank=True)
-    # edr = models.DateField(default="", null=True, blank=True)
-    edr = models.CharField(max_length=20, default="", null=True, blank=True)
+    edr = models.DateField(default="", null=True, blank=True)
+    # edr = models.CharField(max_length=20, default="", null=True, blank=True)
     etr = models.TimeField(default="", null=True, blank=True)
     trComments = models.CharField(max_length=200, default="", null=True, blank=True)
     berth = models.CharField(max_length=20)

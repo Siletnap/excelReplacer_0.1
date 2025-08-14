@@ -2,12 +2,24 @@
 <tr>
   <td data-col-index="0">{{ obj.boatType }}</td>
   <td data-col-index="1">{{ obj.name }}</td>
-  <td data-col-index="2">{{ obj.trDate }}</td>
+  <td data-col-index="2">
+    {% if obj.trDate %}
+        {{ obj.trDate|date:"Y/m/d" }}
+    {% else %}
+        /
+    {% endif %}
+  </td>
   <td data-col-index="3">{{ obj.trTime|time:"H:i"}}</td>
   <td data-col-index="4" class="direction-{{ obj.direction }}">{{ obj.direction }}</td>
   <td data-col-index="5">{{ obj.passengers }}</td>
   <td data-col-index="6">{{ obj.purpose }}</td>
-  <td data-col-index="7">{{ obj.edr }}</td>
+  <td data-col-index="7">
+    {% if obj.edr %}
+        {{ obj.edr|date:"Y/m/d" }}
+    {% else %}
+        /
+    {% endif %}
+  </td>
   <td data-col-index="8">{{ obj.etr|time:"H:i"}}</td>
   <td data-col-index="9">{{ obj.trComments }}</td>
   <td data-col-index="10">{{ obj.berth }}</td>

@@ -87,8 +87,8 @@
     const inTime      = form.querySelector('[name="trTime"]');   // time input
     const selDir      = form.querySelector('[name="direction"]');// select or input
 
-    console.log('Prefill from row:', { boatId, bt, nm, br, st });
-    console.log('Hidden boat_id about to be set to:', hidBoatId?.value);
+//    console.log('Prefill from row:', { boatId, bt, nm, br, st });
+//    console.log('Hidden boat_id about to be set to:', hidBoatId?.value);
 
     // 3) Prefill and lock boatType/name/berth
     if (selBoatType) {
