@@ -25,15 +25,15 @@ class NewTrafficForm(forms.ModelForm):
         label="Time",
     )
 
-    def save(self, commit=True):
-        obj = super().save(commit=False)
-        trDate = self.cleaned_data.get('trDate')
-        edr    = self.cleaned_data.get('edr')
-        obj.trDate = trDate.strftime('%Y/%m/%d') if trDate else ''
-        obj.edr    = edr.strftime('%Y/%m/%d') if edr else ''
-        if commit:
-            obj.save()
-        return obj
+    # def save(self, commit=True):
+    #     obj = super().save(commit=False)
+    #     trDate = self.cleaned_data.get('trDate')
+    #     edr    = self.cleaned_data.get('edr')
+    #     obj.trDate = trDate.strftime('%Y/%m/%d') if trDate else ''
+    #     obj.edr    = edr.strftime('%Y/%m/%d') if edr else ''
+    #     if commit:
+    #         obj.save()
+    #     return obj
 
     class Meta:
         model  = TrafficEntry
