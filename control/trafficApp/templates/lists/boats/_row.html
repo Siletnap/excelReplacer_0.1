@@ -7,6 +7,15 @@
   <td data-col-index="4">{{ obj.cid }}</td>
   <td data-col-index="5">{{ obj.ecod }}</td>
   <td data-col-index="6">
+    <a href="#" class="js-traffic"
+        data-boat-id="{{obj.id}}"
+        data-boat-type="{{ obj.boatType }}"
+        data-boat-name="{{ obj.name }}"
+        data-berth="{{ obj.berth }}"
+        data-state="{{ obj.state }}"
+    >
+        Traffic
+    </a>
     <a href="{% url 'update' obj.id %}">Edit</a>
     <a href="{% url 'delete' obj.id %}">Delete</a>
   </td>

@@ -52,18 +52,23 @@ class TrafficEntry(models.Model):
         default=BoatType.motorYacht,
     )
     name = models.CharField(max_length=100)
-    trDate = models.DateField()
-    trTime = models.TimeField()
+    # trDate = models.DateField(null=True, blank=True)
+    trDate = models.CharField(max_length=20, null=True, blank=True)
+    trTime = models.TimeField(null=True, blank=True)
     direction = models.CharField(
         max_length=20,
         choices=State.choices,
         default=State.IN,
     )
-    passengers = models.IntegerField(validators=[MinValueValidator(1)], default="", blank=True)
-    purpose = models.CharField(max_length=100, default="", blank=True)
-    edr = models.DateField(default="", blank=True)
-    etr = models.TimeField(default="", blank=True)
-    trComments = models.CharField(max_length=200, default="", blank=True)
+    passengers = models.IntegerField(validators=[MinValueValidator(1)],
+                                     default="",
+                                     null=True,
+                                     blank=True)
+    purpose = models.CharField(max_length=100, default="", null=True, blank=True)
+    # edr = models.DateField(default="", null=True, blank=True)
+    edr = models.CharField(max_length=20, default="", null=True, blank=True)
+    etr = models.TimeField(default="", null=True, blank=True)
+    trComments = models.CharField(max_length=200, default="", null=True, blank=True)
     berth = models.CharField(max_length=20)
 
     def __str__(self):

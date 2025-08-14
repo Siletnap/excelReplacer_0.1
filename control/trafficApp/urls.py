@@ -8,5 +8,6 @@ urlpatterns = [
     path('traffic/', views.TrafficListView.as_view(), name = 'traffic'),
     path('update/<int:pk>', views.update, name = 'update'),
     path('delete_boat/<int:pk>', views.delete, name = 'delete'),
+    path("traffic/create/", views.TrafficCreateView.as_view(), name="traffic-create"),  # POST target
     #path('traffic', views.traffic, name = 'traffic'),
 ]

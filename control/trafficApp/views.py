@@ -4,8 +4,10 @@ from .forms import NewBoatForm, NewTrafficForm
 # from .filters import EntryFilter
 from django.db.models import Q
 from django.urls import reverse_lazy
-from django.views.generic import ListView
+from django.views.generic import ListView, CreateView
 from django.views.generic.edit import FormMixin
+from django.http import JsonResponse
+from django.db import transaction
 
 class BaseListCreateView(FormMixin, ListView):
     """
@@ -66,6 +68,7 @@ class BaseListCreateView(FormMixin, ListView):
             "page_title":  self.page_title,
             "row_partial": self.row_partial,
             "form_partial": self.form_partial,
+            "traffic_form": NewTrafficForm(),
         })
         return ctx
 
@@ -90,6 +93,38 @@ class BoatListView(BaseListCreateView):
     row_partial  = "lists/boats/_row.html"
     form_partial = "lists/boats/_form_fields.html"
 
+class TrafficCreateView(CreateView):
+    model = TrafficEntry
+    form_class = NewTrafficForm
+
+    def form_invalid(self, form):
+        # Return field + non-field errors as JSON for display in the modal
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "errors": form.errors}, status=400)
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        # Save traffic entry and update the referenced boat (by PK).
+        with transaction.atomic():
+            obj = form.save()
+
+            # Get submitted boat_id (hidden input). It's optional — check safely.
+            boat_id = self.request.POST.get('boat_id')
+            updated = 0
+            if boat_id:
+                try:
+                    pk = int(boat_id)
+                except (ValueError, TypeError):
+                    pk = None
+                if pk is not None:
+                    # update by PK — efficient single UPDATE query
+                    updated = Boat.objects.filter(pk=pk).update(state=obj.direction)
+
+        # Return JSON for AJAX as before
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"ok": True, "id": obj.id, "boat_updated": bool(updated)})
+        return super().form_valid(form)
+
 class TrafficListView(BaseListCreateView):
     model         = TrafficEntry
     form_class    = NewTrafficForm
@@ -111,6 +146,7 @@ class TrafficListView(BaseListCreateView):
         {"field": "edt",        "label": "E.R.Time"},
         {"field": "trComments", "label": "Comments"},
         {"field": "berth",      "label": "Berth"},
+        {"field": "actions",      "label": "Actions"},
     ]
     row_partial  = "lists/traffic/_row.html"
     form_partial = "lists/traffic/_form_fields.html"
