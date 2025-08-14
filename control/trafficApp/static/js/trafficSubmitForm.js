@@ -77,16 +77,18 @@
     // 1) get data from row
     const { boatId, boatType: bt, name: nm, berth: br, state: st } = readRowValues(link);
 
-    const hidBoatId = form.querySelector('#traffic_boat_id');
-    if (hidBoatId) hidBoatId.value = boatId || '';
-
     // 2) element references inside dialog
+    const hidBoatId = form.querySelector('[name="boat_id"]');
+    if (hidBoatId) hidBoatId.value = boatId || '';
     const selBoatType = form.querySelector('[name="boatType"]'); // select
     const inName      = form.querySelector('[name="name"]');     // text input
     const inBerth     = form.querySelector('[name="berth"]');    // text input
     const inDate      = form.querySelector('[name="trDate"]');   // date input
     const inTime      = form.querySelector('[name="trTime"]');   // time input
     const selDir      = form.querySelector('[name="direction"]');// select or input
+
+    console.log('Prefill from row:', { boatId, bt, nm, br, st });
+    console.log('Hidden boat_id about to be set to:', hidBoatId?.value);
 
     // 3) Prefill and lock boatType/name/berth
     if (selBoatType) {
