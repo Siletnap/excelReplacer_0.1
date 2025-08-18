@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const table       = document.querySelector('table.boats');
   const checkboxes  = document.querySelectorAll('.col-toggle');
   const applyBtn    = document.getElementById('apply-columns');
+  const clearBtn    = document.getElementById('clearBtn');
 
   // On load, restore saved or default all-visible
   const saved       = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -18,6 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
                          .map(cb => Number(cb.dataset.colIndex));
     applyVisibility(visible);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(visible));  // :contentReference[oaicite:4]{index=4}
+  });
+
+  clearBtn.addEventListener('click', () => {
+    const allcb = Array.from(checkboxes).map(cb => Number(cb.dataset.colIndex));
+    allcb.forEach(cb => {
+        cb.checked = true;
+    });
+    applyVisibility(allcb);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(allcb));  // :contentReference[oaicite:4]{index=4}
   });
 
   // The function from above

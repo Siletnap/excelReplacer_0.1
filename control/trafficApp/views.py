@@ -128,7 +128,7 @@ class TrafficCreateView(CreateView):
 class TrafficListView(BaseListCreateView):
     model         = TrafficEntry
     form_class    = NewTrafficForm
-    template_name = "lists/list_page.html"     # shared page
+    template_name = "lists/list_page.html"     # sharetd page
     success_url   = reverse_lazy("traffic")
     page_title    = "Traffic List"
 
