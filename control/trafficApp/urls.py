@@ -11,3 +11,4 @@ urlpatterns = [
     path("traffic/create/", views.TrafficCreateView.as_view(), name="traffic-create"),  # POST target
     #path('traffic', views.traffic, name = 'traffic'),
 ]
+#fotios11
