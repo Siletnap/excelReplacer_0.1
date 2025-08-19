@@ -132,21 +132,36 @@ class TrafficListView(BaseListCreateView):
     success_url   = reverse_lazy("traffic")
     page_title    = "Traffic List"
 
-    search_fields = ("boatType", "name", "trDate", "trTime", "direction", "passengers", "purpose", "edr", "etr", "trComments", "berth")
+    search_fields = ("boatType", "name", "trDate", "trTime", "direction", "passengers", "purpose", "edr", "etr", "trComments", "berth", "occurred_at")
+
+    # order by occurred_at if present (newer first). If occurred_at is missing / null,
+    # fallback to trDate then trTime so chronological order is preserved as much as possible.
+
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        # best if you have an occurred_at DateTimeField; otherwise fallback:
+
+        if hasattr(self.model, "occurred_at"):
+            return qs.order_by("-occurred_at")
+
+        return qs.order_by("-trDate", "-trTime")
 
     column_list = [
-        {"field": "boatType",   "label": "Type"},
-        {"field": "name",       "label": "Name"},
-        {"field": "trDate",     "label": "Date"},
-        {"field": "trTime",     "label": "Time"},
-        {"field": "direction",  "label": "Direction"},
-        {"field": "passengers", "label": "Passengers"},
-        {"field": "purpose",    "label": "Purpose"},
-        {"field": "edr",        "label": "E.R.Date"},
-        {"field": "edt",        "label": "E.R.Time"},
-        {"field": "trComments", "label": "Comments"},
-        {"field": "berth",      "label": "Berth"},
-        {"field": "actions",      "label": "Actions"},
+        {"field": "boatType",       "label": "Type"},
+        {"field": "name",           "label": "Name"},
+        {"field": "trDate",         "label": "Date"},
+        {"field": "trTime",         "label": "Time"},
+        {"field": "direction",      "label": "Direction"},
+        {"field": "passengers",     "label": "Passengers"},
+        {"field": "purpose",        "label": "Purpose"},
+        {"field": "edr",            "label": "E.R.Date"},
+        {"field": "edt",            "label": "E.R.Time"},
+        {"field": "trComments",     "label": "Comments"},
+        {"field": "berth",          "label": "Berth"},
+        {"field": "actions",        "label": "Actions"},
+        {"field": "occurred_at",    "label": "Occured at"},
     ]
     row_partial  = "lists/traffic/_row.html"
     form_partial = "lists/traffic/_form_fields.html"
@@ -167,51 +182,3 @@ def delete(request, pk):
         boat.delete()
         return redirect('boats')
     return render(request, 'delete.html', {'boat':boat})
-
-# def traffic(request):
-#     return render(request, 'traffic.html')
-
-# def index(request):
-#     # ---------- handle the create form ----------
-#     if request.method == "POST":
-#         form = NewBoatForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return redirect("index")          # PRG pattern
-#     else:
-#         form = NewBoatForm()
-#
-#     # ---------- build the queryset ----------
-#     boats = Boat.objects.all()                # base queryset
-#     q      = request.GET.get("q", "").strip() # search term
-#
-#
-#     if q:                                     # filter on *either* column
-#         boats = boats.filter(
-#             Q(name__icontains=q) |            # case‑insensitive contains  :contentReference[oaicite:0]{index=0}
-#             Q(boatType__icontains=q) |
-#             Q(berth__icontains=q) |
-#             Q(state__icontains=q) |
-#             Q(cid__icontains=q)|
-#             Q(ecod__icontains=q)
-#         )
-#
-#
-#     column_list = [
-#         {'field': 'boatType', 'label': 'Type'},
-#         {'field': 'name', 'label': 'Name'},
-#         {'field': 'berth', 'label': 'Berth'},
-#         {'field': 'state', 'label': 'State'},
-#         {'field': 'cid', 'label': 'Check-In'},
-#         {'field': 'ecod', 'label': 'Check-Out'},
-#         {'field': 'actions', 'label': 'Actions'},
-#     ]
-#
-#     ctx = {
-#         "form": form,
-#         "boats": boats,
-#         "q": q,
-#         "column_list": column_list,
-#     }
-#
-#     return render(request, "index.html", ctx)

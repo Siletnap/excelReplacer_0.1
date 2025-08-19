@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils import timezone
+from datetime import datetime
 
 
 class State(models.TextChoices):  # Enumeration of allowed values
@@ -70,6 +72,16 @@ class TrafficEntry(models.Model):
     etr = models.TimeField(default="", null=True, blank=True)
     trComments = models.CharField(max_length=200, default="", null=True, blank=True)
     berth = models.CharField(max_length=20)
+    occurred_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    def save(self, *args, **kwargs):
+        if self.trDate and self.trTime:
+            dt = datetime.combine(self.trDate, self.trTime)
+            # if you use USE_TZ=True, make it aware:
+            self.occurred_at = timezone.make_aware(dt, timezone.get_current_timezone())
+        else:
+            self.occurred_at = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.boatType} {self.name} going {self.direction}, at {self.trTime}, on {self.trDate}."
