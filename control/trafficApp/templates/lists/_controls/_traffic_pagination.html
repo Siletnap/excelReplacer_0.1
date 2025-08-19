@@ -1,0 +1,45 @@
+<form method="get" class="controls" id="traffic-controls">
+  {# preserve current search if you have one: #}
+  {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+
+  <fieldset>
+    <legend>Pagination</legend>
+    <label style="margin-left: 1rem;">
+      <input type="radio" name="mode" value="day" {% if mode == 'day' %}checked{% endif %}>
+      Daily
+    </label>
+    <label>
+      <input type="radio" name="mode" value="per" {% if mode == 'per' %}checked{% endif %}>
+      Per page:
+    </label>
+    <input type="number" name="per" min="1" max="500" step="1"
+           value="{{ per|default:10 }}" {% if mode != 'per' %}disabled{% endif %}
+           style="width: 6rem;">
+  </fieldset>
+
+  <fieldset>
+    <legend>Global sort</legend>
+    <label for="sort">Column:</label>
+    <select id="sort" name="sort">
+      <!-- keep in sync with SORT_MAP -->
+      <option value="occurred_at" {% if sort == 'occurred_at' %}selected{% endif %}>Occurred at</option>
+      <option value="created"     {% if sort == 'created' %}selected{% endif %}>Created</option>
+      <option value="boatType"    {% if sort == 'boatType' %}selected{% endif %}>Boat type</option>
+      <option value="name"        {% if sort == 'name' %}selected{% endif %}>Name</option>
+      <option value="berth"       {% if sort == 'berth' %}selected{% endif %}>Berth</option>
+      <option value="trDate"      {% if sort == 'trDate' %}selected{% endif %}>Traffic date</option>
+      <option value="trTime"      {% if sort == 'trTime' %}selected{% endif %}>Traffic time</option>
+      <option value="direction"   {% if sort == 'direction' %}selected{% endif %}>Direction</option>
+      <option value="passengers"  {% if sort == 'passengers' %}selected{% endif %}>Passengers</option>
+      <option value="purpose"     {% if sort == 'purpose' %}selected{% endif %}>Purpose</option>
+      <option value="edr"         {% if sort == 'edr' %}selected{% endif %}>EDR</option>
+      <option value="etr"         {% if sort == 'etr' %}selected{% endif %}>ETR</option>
+      <option value="trComments"  {% if sort == 'trComments' %}selected{% endif %}>Comments</option>
+    </select>
+
+    <input type="hidden" name="dir" id="dir" value="{{ dir|default:'desc' }}">
+    <button type="button" id="invert-btn">Invert ({{ dir|upper }})</button>
+  </fieldset>
+
+  <button type="submit">Apply</button>
+</form>

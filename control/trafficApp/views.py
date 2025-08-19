@@ -1,13 +1,40 @@
 from django.shortcuts import render, redirect
 from .models import Boat, TrafficEntry
 from .forms import NewBoatForm, NewTrafficForm
+from .utils.paginators import DayPaginator
 # from .filters import EntryFilter
-from django.db.models import Q
+from django.db.models import Q, F
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 from django.views.generic.edit import FormMixin
 from django.http import JsonResponse
 from django.db import transaction
+from django.core.paginator import Paginator, InvalidPage
+from django.db.models.expressions import OrderBy
+from django.utils.functional import cached_property
+from datetime import datetime
+
+
+
+
+# Whitelist of UI -> DB field to prevent arbitrary order_by injection.
+SORT_MAP = {
+    "occurred_at": "occurred_at",  # recommended default
+    "created":     "created",
+    "boatType":    "boatType",
+    "name":        "name",
+    "berth":       "berth",
+    "trDate":      "trDate",
+    "trTime":      "trTime",
+    "direction":   "direction",
+    "passengers":  "passengers",
+    "purpose":     "purpose",
+    "edr":         "edr",
+    "etr":         "etr",
+    "trComments":  "trComments",
+}
+
+MAX_PER = 500  # protect DB and template; tune for your infra
 
 class BaseListCreateView(FormMixin, ListView):
     """
@@ -69,6 +96,7 @@ class BaseListCreateView(FormMixin, ListView):
             "row_partial": self.row_partial,
             "form_partial": self.form_partial,
             "traffic_form": NewTrafficForm(),
+            "show_traffic_controls": getattr(self, "show_traffic_controls", False),
         })
         return ctx
 
@@ -125,28 +153,59 @@ class TrafficCreateView(CreateView):
             return JsonResponse({"ok": True, "id": obj.id, "boat_updated": bool(updated)})
         return super().form_valid(form)
 
+
+
+# -- keep SORT_MAP, MAX_PER as you have --
+
 class TrafficListView(BaseListCreateView):
     model         = TrafficEntry
     form_class    = NewTrafficForm
-    template_name = "lists/list_page.html"     # sharetd page
+    template_name = "lists/list_page.html"
     success_url   = reverse_lazy("traffic")
     page_title    = "Traffic List"
+    show_traffic_controls = True
 
-    search_fields = ("boatType", "name", "trDate", "trTime", "direction", "passengers", "purpose", "edr", "etr", "trComments", "berth", "occurred_at")
 
-    # order by occurred_at if present (newer first). If occurred_at is missing / null,
-    # fallback to trDate then trTime so chronological order is preserved as much as possible.
+    search_fields = ("boatType", "name", "trDate", "trTime", "direction",
+                     "passengers", "purpose", "edr", "etr", "trComments",
+                     "berth", "occurred_at")
 
+    # ---- Controls from GET ----
+    @cached_property
+    def mode(self):
+        m = (self.request.GET.get("mode") or "day").lower()
+        return "day" if m == "day" else "per"
+
+    @cached_property
+    def per(self):
+        if self.mode != "per":
+            return None
+        try:
+            n = int(self.request.GET.get("per", 10))
+        except ValueError:
+            n = 10
+        return max(1, min(n, MAX_PER))
+
+    @cached_property
+    def sort_key(self):
+        key = (self.request.GET.get("sort") or "occurred_at")
+        return key if key in SORT_MAP else "occurred_at"
+
+    @cached_property
+    def sort_dir(self):
+        d = (self.request.GET.get("dir") or "desc").lower()
+        return "asc" if d == "asc" else "desc"
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset()  # keeps your search filter
+        field = SORT_MAP[self.sort_key]
+        if self.sort_dir == "asc":
+            ordering = [F(field).asc(nulls_last=True)]
+        else:
+            ordering = [F(field).desc(nulls_last=True)]
+        ordering.append("id")  # stable tiebreaker
+        return qs.order_by(*ordering)
 
-        # best if you have an occurred_at DateTimeField; otherwise fallback:
-
-        if hasattr(self.model, "occurred_at"):
-            return qs.order_by("-occurred_at")
-
-        return qs.order_by("-trDate", "-trTime")
 
     column_list = [
         {"field": "boatType",       "label": "Type"},
@@ -165,6 +224,128 @@ class TrafficListView(BaseListCreateView):
     ]
     row_partial  = "lists/traffic/_row.html"
     form_partial = "lists/traffic/_form_fields.html"
+
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "mode": self.mode,
+            "per": self.per,
+            "sort": self.sort_key,
+            "dir":  self.sort_dir,
+        })
+
+        # pagination
+        if self.mode == "day":
+            qs = ctx["object_list"]
+            paginator = DayPaginator(qs, include_empty_days=True)
+
+            # Min/max for the date picker
+            if paginator.days:
+                max_day = paginator.days[0]  # newest first in our DayPaginator
+                min_day = paginator.days[-1]  # oldest
+            else:
+                max_day = min_day = None
+
+            # If a specific day is requested, compute its page index
+            requested_day_str = self.request.GET.get("day")
+            if requested_day_str:
+                try:
+                    requested_day = datetime.strptime(requested_day_str, "%Y-%m-%d").date()
+                except ValueError:
+                    requested_day = None
+                # If within range, jump there; otherwise clamp to range
+                if requested_day and paginator.days:
+                    if requested_day > max_day:
+                        page_number = 1
+                    elif requested_day < min_day:
+                        page_number = paginator.num_pages
+                    else:
+                        try:
+                            page_number = paginator.days.index(requested_day) + 1
+                        except ValueError:
+                            # Shouldn't happen with include_empty_days=True, but guard anyway
+                            page_number = 1
+                else:
+                    page_number = 1
+            else:
+                page_number = self.request.GET.get("page") or 1
+            try:
+                page_obj = paginator.page(page_number)
+            except InvalidPage:
+                page_obj = paginator.page(1)
+            ctx.update({
+                "is_paginated": True,
+                "paginator": paginator,
+                "page_obj": page_obj,
+                "object_list": page_obj.object_list,
+                "group_day": page_obj.day,
+                "empty_day": not page_obj.object_list.exists(),
+                # expose bounds for the date picker
+                "min_day": min_day.isoformat() if min_day else "",
+                "max_day": max_day.isoformat() if max_day else "",
+            })
+        else:
+            from django.core.paginator import Paginator
+            per = self.per or 10
+            paginator = Paginator(ctx["object_list"], per)
+            page_number = self.request.GET.get("page") or 1
+            try:
+                page_obj = paginator.page(page_number)
+            except InvalidPage:
+                page_obj = paginator.page(1)
+            ctx.update({
+                "is_paginated": True,
+                "paginator": paginator,
+                "page_obj": page_obj,
+                "object_list": page_obj.object_list,
+            })
+        return ctx
+
+
+
+
+
+# class TrafficListView(BaseListCreateView):
+#     model         = TrafficEntry
+#     form_class    = NewTrafficForm
+#     template_name = "lists/list_page.html"     # sharetd page
+#     success_url   = reverse_lazy("traffic")
+#     page_title    = "Traffic List"
+#
+#     search_fields = ("boatType", "name", "trDate", "trTime", "direction", "passengers", "purpose", "edr", "etr", "trComments", "berth", "occurred_at")
+#
+#     # order by occurred_at if present (newer first). If occurred_at is missing / null,
+#     # fallback to trDate then trTime so chronological order is preserved as much as possible.
+#
+#
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+#
+#         # best if you have an occurred_at DateTimeField; otherwise fallback:
+#
+#         if hasattr(self.model, "occurred_at"):
+#             return qs.order_by("-occurred_at")
+#
+#         return qs.order_by("-trDate", "-trTime")
+#
+#     column_list = [
+#         {"field": "boatType",       "label": "Type"},
+#         {"field": "name",           "label": "Name"},
+#         {"field": "trDate",         "label": "Date"},
+#         {"field": "trTime",         "label": "Time"},
+#         {"field": "direction",      "label": "Direction"},
+#         {"field": "passengers",     "label": "Passengers"},
+#         {"field": "purpose",        "label": "Purpose"},
+#         {"field": "edr",            "label": "E.R.Date"},
+#         {"field": "edt",            "label": "E.R.Time"},
+#         {"field": "trComments",     "label": "Comments"},
+#         {"field": "berth",          "label": "Berth"},
+#         {"field": "actions",        "label": "Actions"},
+#         {"field": "occurred_at",    "label": "Occured at"},
+#     ]
+#     row_partial  = "lists/traffic/_row.html"
+#     form_partial = "lists/traffic/_form_fields.html"
 
 def update(request, pk):
     boat = Boat.objects.get(id = pk)

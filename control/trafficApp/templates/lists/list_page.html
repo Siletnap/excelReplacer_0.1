@@ -8,6 +8,10 @@
   <script src="{% static 'js/columns.js' %}" defer></script>
   <script src="{% static 'js/trafficSubmitForm.js' %}" defer></script>
 
+    {% if show_traffic_controls %}
+        <script src="{% static 'js/paginatorHelper.js' %}" defer></script>
+        <script src="{% static 'js/dayPicker.js' %}" defer></script>
+    {% endif %}
 
 
   <h1>{{ page_title }}</h1>
@@ -22,10 +26,23 @@
     </div>
   </form>
 
+    {% if show_traffic_controls %}
+      {% include "lists/_controls/_traffic_pagination.html" %}
+    {% endif %}
+
+
   {% include "lists/_controls/_column_picker.html" with column_list=column_list %}
   {% include "lists/_controls/_search_only.html" %}
 
-  {% include "lists/_table.html" with column_list=column_list row_partial=row_partial object_list=object_list %}
+
+    {% if show_traffic_controls %}
+      {% include "lists/traffic/pagination_tables.html" %}
+    {% else %}
+        {% include "lists/_table.html" with objects=object_list row_partial=row_partial %}
+    {% endif %}
+
+
+
 
     <dialog id="trafficDialog" aria-modal="true">
       <form id="trafficForm" method="post" action="{% url 'traffic-create' %}">

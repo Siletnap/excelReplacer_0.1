@@ -1,0 +1,57 @@
+{% if is_paginated %}
+      <nav class="pager" aria-label="Pagination">
+        {% if page_obj.has_previous %}
+          <a href="?mode={{ mode }}{% if per %}&per={{ per }}{% endif %}&sort={{ sort }}&dir={{ dir }}{% if q %}&q={{ q|urlencode }}{% endif %}&page={{ page_obj.previous_page_number }}">← Prev</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?mode={{ mode }}{% if per %}&per={{ per }}{% endif %}&sort={{ sort }}&dir={{ dir }}{% if q %}&q={{ q|urlencode }}{% endif %}&page={{ page_obj.next_page_number }}">Next →</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+
+
+    {% if mode == 'day' %}
+        <h2 id="js-day-jump"
+              class="mt-4"
+              role="button"
+              tabindex="0"
+              aria-haspopup="dialog"
+              aria-controls="dayPickerDialog"
+              title="Jump to date">
+            {{ group_day }}
+<!--            {{ group_day|date:"Y/m/d" }}-->
+        </h2>
+
+        {# Date picker dialog #}
+        <dialog id="dayPickerDialog" aria-modal="true">
+            <form method="get">
+              <h3>Select date</h3>
+              <input type="hidden" name="mode" value="day">
+              {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+              {% if dir %}<input type="hidden" name="dir"  value="{{ dir  }}">{% endif %}
+              {% if q %}<input type="hidden"   name="q"    value="{{ q|escape }}"> {% endif %}
+
+              <input type="date"
+                     id="dayPickerInput"
+                     name="day"
+                     value="{{ group_day|date:'Y-m-d' }}"
+                     min="{{ min_day }}"
+                     max="{{ max_day }}"
+                     required>
+
+              <menu style="margin-top: 0.75rem;">
+                <button value="cancel" formmethod="dialog" type="button" id="dayPickerCancel">Cancel</button>
+                <button type="submit" id="dayPickerGo">Go</button>
+              </menu>
+            </form>
+        </dialog>
+
+      {% if empty_day %}
+        <p><em>No traffic</em></p>
+      {% else %}
+        {% include "lists/_table.html" with objects=object_list row_partial=row_partial %}
+      {% endif %}
+    {% else %}
+      {% include "lists/_table.html" with objects=object_list row_partial=row_partial %}
+    {% endif %}
