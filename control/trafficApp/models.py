@@ -5,17 +5,24 @@ from datetime import datetime
 
 
 class State(models.TextChoices):  # Enumeration of allowed values
-    IN = 'in', 'In'
-    OUT = 'out', 'Out'
-    REPAIR = 'repair', 'Repair'
+    IN      = 'in', 'In'
+    OUT     = 'out', 'Out'
+    REPAIR  = 'repair', 'Repair'
+
+class Direction(models.TextChoices):  # Enumeration of allowed values
+    IN          = 'in', 'In'
+    OUT         = 'out', 'Out'
+    REPAIR      = 'repair', 'Repair'
+    ARRIVAL     = 'arrival', 'Arrival'
+    DEPARTURE   = 'departure', 'Departure'
 
 
 class BoatType(models.TextChoices):  # Enumeration of allowed values
-    motorYacht = 'M/Y', 'M/Y'
-    sailingYacht = 'S/Y', 'S/Y'
-    catamaran = 'CAT.', 'CAT.'
-    jetski = 'JETSKI', 'JETSKI'
-    tender = 'TENDER', 'TENDER'
+    motorYacht      = 'M/Y', 'M/Y'
+    sailingYacht    = 'S/Y', 'S/Y'
+    catamaran       = 'CAT.', 'CAT.'
+    jetski          = 'JETSKI', 'JETSKI'
+    tender          = 'TENDER', 'TENDER'
 
 class Boat(models.Model):
 
@@ -63,16 +70,21 @@ class TrafficEntry(models.Model):
         default=State.IN,
     )
     passengers = models.IntegerField(validators=[MinValueValidator(1)],
-                                     default="",
+                                     default=None,
                                      null=True,
                                      blank=True)
     purpose = models.CharField(max_length=100, default="", null=True, blank=True)
-    edr = models.DateField(default="", null=True, blank=True)
+    edr = models.DateField(default=None, null=True, blank=True)
     # edr = models.CharField(max_length=20, default="", null=True, blank=True)
-    etr = models.TimeField(default="", null=True, blank=True)
+    etr = models.TimeField(default=None, null=True, blank=True)
     trComments = models.CharField(max_length=200, default="", null=True, blank=True)
     berth = models.CharField(max_length=20)
     occurred_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    trafficBoatId = models.ForeignKey(Boat,
+                                null=True,
+                                blank=True,
+                                on_delete=models.SET_NULL,
+                                related_name="traffic_entries",)
 
     def save(self, *args, **kwargs):
         if self.trDate and self.trTime:

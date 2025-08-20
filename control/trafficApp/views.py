@@ -121,6 +121,8 @@ class BoatListView(BaseListCreateView):
     row_partial  = "lists/boats/_row.html"
     form_partial = "lists/boats/_form_fields.html"
 
+
+
 class TrafficCreateView(CreateView):
     model = TrafficEntry
     form_class = NewTrafficForm
@@ -141,12 +143,17 @@ class TrafficCreateView(CreateView):
             updated = 0
             if boat_id:
                 try:
-                    pk = int(boat_id)
+                    boat_pk = int(boat_id)
                 except (ValueError, TypeError):
-                    pk = None
-                if pk is not None:
+                    boat_pk = None
+                if boat_pk is not None:
                     # update by PK — efficient single UPDATE query
-                    updated = Boat.objects.filter(pk=pk).update(state=obj.direction)
+                    TrafficEntry.objects.filter(pk=obj.pk).update(trafficBoatId_id=boat_pk)
+                    if obj.direction == 'arrival':
+                        obj.direction = 'in'
+                    elif obj.direction == 'departure':
+                        obj.direction = 'out'
+                    updated = Boat.objects.filter(pk=boat_pk).update(state=obj.direction)
 
         # Return JSON for AJAX as before
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
