@@ -7,12 +7,16 @@ from django.db.models import Q, F
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 from django.views.generic.edit import FormMixin
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.db import transaction
 from django.core.paginator import Paginator, InvalidPage
 from django.db.models.expressions import OrderBy
 from django.utils.functional import cached_property
 from datetime import datetime
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.db.utils import OperationalError
 
 
 
@@ -77,6 +81,20 @@ class BaseListCreateView(FormMixin, ListView):
             kwargs["data"] = self.request.POST
         return kwargs
 
+    def get_form(self, form_class=None):
+        """
+        Return a form instance if form_class is provided; otherwise return None.
+
+        This allows list-only subclasses to inherit the view without providing
+        a create form.
+        """
+        if form_class is None:
+            form_class = self.form_class
+        if not form_class:
+            return None
+        # delegate to FormMixin.get_form for normal behaviour
+        return super().get_form(form_class)
+
     def get_queryset(self):
         qs = super().get_queryset()
         q  = self.request.GET.get("q", "").strip()
@@ -121,6 +139,46 @@ class BoatListView(BaseListCreateView):
     row_partial  = "lists/boats/_row.html"
     form_partial = "lists/boats/_form_fields.html"
 
+    def get_queryset(self):
+        # Start from BaseListCreateView.get_queryset (this applies q-search)
+        qs = super().get_queryset()
+        # Only show not-deleted and not-archived boats
+        return Boat.objects.visible()
+
+@require_POST
+def boat_soft_delete(request, pk):
+    """
+    Soft-delete a Boat by setting boat.deleted = True.
+
+    Expects POST (AJAX or normal). Returns JSON {ok: True} on success.
+    """
+    # Optional: restrict to staff/authenticated users
+    # if not request.user.is_authenticated:
+    #     return JsonResponse({"ok": False, "error": "auth"}, status=403)
+
+    boat = get_object_or_404(Boat, pk=pk)
+    # optional: return 400 if already deleted
+    if boat.deleted:
+        return JsonResponse({"ok": False, "error": "already_deleted"}, status=400)
+
+    now = timezone.now()
+    # Retry loop to be resilient to transient "database is locked" on SQLite
+    for attempt in range(1, 4):
+        try:
+            with transaction.atomic():
+                Boat.objects.filter(pk=pk, deleted=False).update(
+                    deleted=True,
+                    deleted_at=now,
+                    # deleted_by_id = request.user.pk if you track deleter and field exists
+                )
+            return JsonResponse({"ok": True, "id": pk})
+        except OperationalError as exc:
+            if 'locked' in str(exc).lower() and attempt < 3:
+                import time
+                time.sleep(0.05 * attempt)
+                continue
+            raise
+    return None
 
 
 class TrafficCreateView(CreateView):
@@ -353,6 +411,99 @@ class TrafficListView(BaseListCreateView):
 #     ]
 #     row_partial  = "lists/traffic/_row.html"
 #     form_partial = "lists/traffic/_form_fields.html"
+
+
+class PendingDeletionsView(BaseListCreateView):
+    model = Boat
+    template_name = "lists/list_page.html"   # new template (see below)
+    context_object_name = "objects"
+    page_title = "Pending Deletions"
+    success_url   = reverse_lazy("pending-deletions")
+    show_traffic_controls = False
+    paginate_by = 25
+
+    search_fields = ("name", "boatType", "berth")
+
+    column_list = [
+        {"field": "boatType",   "label": "Type"},
+        {"field": "name",       "label": "Name"},
+        {"field": "berth",      "label": "Berth"},
+        {"field": "remaining",  "label": "Remaining"},
+        {"field": "actions",    "label": "Actions"},
+    ]
+
+    row_partial  = "lists/pending_deletions_/_row.html"
+    form_partial = "lists/pending_deletions_/empty_form.html"
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Only deleted and not yet archived
+        qs = qs.filter(deleted=True, archived=False).order_by('-deleted_at', '-created')
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            # reuse same simple q search against name/berth/boatType
+            qs = qs.filter(Q(name__icontains=q) | Q(berth__icontains=q) | Q(boatType__icontains=q))
+        return qs.order_by('-deleted_at', '-created')
+
+# Archive endpoint (set archived=True)
+# @login_required
+# @user_passes_test(staff_required)
+@require_POST
+def boat_archive(request, pk):
+    boat = get_object_or_404(Boat, pk=pk)
+    if boat.archived:
+        return JsonResponse({'ok': False, 'error': 'already_archived'}, status=400)
+    # Only archive boats that are already deleted (our workflow)
+    if not boat.deleted:
+        return JsonResponse({'ok': False, 'error': 'not_deleted'}, status=400)
+
+    # lightly retry on sqlite lock
+    for attempt in range(1, 4):
+        try:
+            with transaction.atomic():
+                updated = Boat.objects.filter(pk=pk, deleted=True, archived=False).update(
+                    archived=True,
+                    archived_at=timezone.now()
+                )
+            return JsonResponse({'ok': bool(updated), 'id': pk})
+        except OperationalError as exc:
+            if 'locked' in str(exc).lower() and attempt < 3:
+                import time;
+                time.sleep(0.05 * attempt)
+                continue
+            raise
+    return None
+
+
+# Cancel pending deletion (unset deleted flag)
+# @login_required
+# @user_passes_test(staff_required)
+@require_POST
+def boat_cancel_delete(request, pk):
+    boat = get_object_or_404(Boat, pk=pk)
+    if not boat.deleted:
+        return JsonResponse({'ok': False, 'error': 'not_deleted'}, status=400)
+
+    # retry lightly for sqlite lock in dev
+    for attempt in range(1, 4):
+        try:
+            with transaction.atomic():
+                updated = Boat.objects.filter(pk=pk, deleted=True).update(
+                    deleted=False,
+                    deleted_at=None
+                )
+            return JsonResponse({'ok': bool(updated), 'id': pk})
+        except OperationalError as e:
+            if 'locked' in str(e).lower() and attempt < 3:
+                import time; time.sleep(0.05 * attempt)
+                continue
+            raise
+    return None
+
+
+# Helper permission — change to appropriate condition for your app
+# def staff_required(user):
+#     return user.is_active and user.is_staff
 
 def update(request, pk):
     boat = Boat.objects.get(id = pk)

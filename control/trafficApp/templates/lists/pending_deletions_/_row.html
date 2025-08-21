@@ -1,0 +1,13 @@
+{# templates/lists/pending_deletions_/_row.html #}
+<tr data-pk="{{ obj.id }}" data-deleted-at="{{ obj.deleted_at|date:'c' }}">
+  <td data-col-index="0">{{ obj.boatType }}</td>
+  <td data-col-index="1">{{ obj.name }}</td>
+  <td data-col-index="2">{{ obj.berth }}</td>
+    <td data-col-index="3" class="remaining-time">
+        <!-- JS will populate this on page load. Friendly placeholder: -->
+        --:--:--
+    </td>
+  <td data-col-index="4">
+    <a href="#" class="js-cancel-delete" data-pk="{{ obj.id }}">Undo</a>
+  </td>
+</tr>

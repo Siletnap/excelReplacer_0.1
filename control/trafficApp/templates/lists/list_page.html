@@ -12,6 +12,14 @@
         <script src="{% static 'js/paginatorHelper.js' %}" defer></script>
         <script src="{% static 'js/dayPicker.js' %}" defer></script>
     {% endif %}
+    {% if page_title == "Boat List" %}
+        <script src="{% static 'js/boatDelete.js' %}" defer></script>
+    {% endif %}
+    {% if page_title == "Pending Deletions" %}
+        <script src="{% static 'js/pendingDeletions.js' %}" defer></script>
+        <script src="{% static 'js/pendingDeletionsAutoArchive.js' %}" defer></script>
+    {% endif %}
+
 
 
   <h1>{{ page_title }}</h1>
@@ -42,6 +50,19 @@
     {% endif %}
 
 
+    {% if page_title == "Boat List" %}
+        <dialog id="boatDeleteDialog" aria-modal="true">
+          <form method="post" id="boatDeleteForm">
+            {% csrf_token %}
+            <p id="boatDeleteMessage">Are you sure?</p>
+            <input type="hidden" name="pk" id="boatDeletePk" value="">
+            <menu>
+              <button type="button" id="boatDeleteNo">No</button>
+              <button type="submit" id="boatDeleteYes">Yes</button>
+            </menu>
+          </form>
+        </dialog>
+    {% endif %}
 
 
     <dialog id="trafficDialog" aria-modal="true">

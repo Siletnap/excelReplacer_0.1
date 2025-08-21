@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<h1>Pending deletions</h1>
+
+<form method="get" class="controls">
+  <input name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search name or berth">
+  <button type="submit">Search</button>
+</form>
+
+<table class="boats">
+  <thead>
+    <tr>
+      <th>Type</th><th>Name</th><th>Berth</th><th>Deleted at</th><th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for obj in objects %}
+    <tr data-boat-id="{{ obj.id }}">
+      <td>{{ obj.boatType }}</td>
+      <td>{{ obj.name }}</td>
+      <td>{{ obj.berth }}</td>
+      <td>{{ obj.deleted_at|date:"Y/m/d H:i" }}</td>
+      <td>
+        <a href="#" class="js-cancel-delete" data-pk="{{ obj.id }}">Cancel</a>
+        |
+        <a href="#" class="js-archive-boat" data-pk="{{ obj.id }}">Archive</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">No pending deletions</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% include "pagination_partial.html" with page_obj=page_obj paginator=paginator %}
+
+<script src="{% static 'js/pendingDeletions.js' %}" defer></script>
+{% endblock %}

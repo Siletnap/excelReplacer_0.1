@@ -17,6 +17,13 @@
         Traffic
     </a>
     <a href="{% url 'update' obj.id %}">Edit</a>
-    <a href="{% url 'delete' obj.id %}">Delete</a>
+    <a href="#" class="js-boat-delete"
+        data-boat-id="{{obj.id}}"
+        data-boat-type="{{ obj.boatType }}"
+        data-boat-name="{{ obj.name }}"
+        data-boat-berth="{{ obj.berth }}"
+    >
+        Delete
+    </a>
   </td>
 </tr>

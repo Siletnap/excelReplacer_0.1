@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 from datetime import datetime
-
+from django.conf import settings
 
 class State(models.TextChoices):  # Enumeration of allowed values
     IN      = 'in', 'In'
@@ -16,7 +16,6 @@ class Direction(models.TextChoices):  # Enumeration of allowed values
     ARRIVAL     = 'arrival', 'Arrival'
     DEPARTURE   = 'departure', 'Departure'
 
-
 class BoatType(models.TextChoices):  # Enumeration of allowed values
     motorYacht      = 'M/Y', 'M/Y'
     sailingYacht    = 'S/Y', 'S/Y'
@@ -24,30 +23,72 @@ class BoatType(models.TextChoices):  # Enumeration of allowed values
     jetski          = 'JETSKI', 'JETSKI'
     tender          = 'TENDER', 'TENDER'
 
+class BoatQuerySet(models.QuerySet):
+    def visible(self):
+        # All pages should show boats that are not deleted and not archived
+        return self.filter(deleted=False, archived=False)
+
+    def pending_deletions(self):
+        # Pending deletions are marked deleted but not archived
+        return self.filter(deleted=True, archived=False)
+
+class BoatManager(models.Manager):
+    def get_queryset(self):
+        return BoatQuerySet(self.model, using=self._db)
+
+    def visible(self):
+        return self.get_queryset().visible()
+
+    def pending_deletions(self):
+        return self.get_queryset().pending_deletions()
+
 class Boat(models.Model):
 
-    boatType = models.CharField(
-        max_length=30,
-        choices=BoatType.choices,
-        default=BoatType.motorYacht,
-    )
-    name = models.CharField(max_length=100)
-    berth = models.CharField(max_length=20)
-    created = models.DateTimeField(auto_now_add=True)
-    state = models.CharField(  # <-- changed from IntegerField
-        max_length=20,
-        choices=State.choices,
-        default=State.IN,
-    )
-    cid = models.CharField(max_length=50, default="", blank=True)
-    ecod = models.CharField(max_length=50, default="", blank=True)
+    boatType    = models.CharField(
+                                    max_length=30,
+                                    choices=BoatType.choices,
+                                    default=BoatType.motorYacht,)
+    name        = models.CharField(max_length=100)
+    berth       = models.CharField(max_length=20)
+    created     = models.DateTimeField(auto_now_add=True)
+    state       = models.CharField(  # <-- changed from IntegerField
+                                    max_length=20,
+                                    choices=State.choices,
+                                    default=State.IN,)
+    cid         = models.CharField(max_length=50, default="", blank=True)
+    ecod        = models.CharField(max_length=50, default="", blank=True)
+
+    deleted     = models.BooleanField()
+    deleted_at  = models.DateTimeField(null=True, blank=True)
+    archived    = models.BooleanField()
+    archived_at = models.DateTimeField(null=True, blank=True)
+
+    objects     = BoatManager()     # supports .visible() and .pending_deletions()
+    all_objects = models.Manager()
 
     def save(self, *args, **kwargs):
+        self.deleted = False
+        self.archived = False
         if self.name:
             self.name = self.name.upper()
         if self.berth:
             self.berth = self.berth.upper()
         super().save(*args, **kwargs)
+
+    def soft_delete(self, user=None):
+        self.deleted = True
+        self.deleted_at = timezone.now()
+        # if user and hasattr(user, 'pk'):
+        #     self.deleted_by_id = user.pk
+        self.save(update_fields=['deleted', 'deleted_at']) # , 'deleted_by'])
+
+    def archive(self, user=None):
+        # When a boat is archived it should effectively disappear from any page
+        self.archived = True
+        self.archived_at = timezone.now()
+        # if user and hasattr(user, 'pk'):
+        #     self.archived_by_id = user.pk
+        self.save(update_fields=['archived', 'archived_at']) # , 'archived_by'])
 
     def __str__(self):
         return f"{self.boatType} {self.name}"

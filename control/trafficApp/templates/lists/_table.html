@@ -12,7 +12,7 @@
     </thead>
     <tbody>
       {% for obj in object_list %}
-        {% include row_partial with obj=obj %}
+            {% include row_partial with obj=obj %}
       {% empty %}
         <tr><td colspan="{{ column_list|length }}">No entries found.</td></tr>
       {% endfor %}
